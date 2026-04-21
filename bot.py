@@ -38,7 +38,14 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def report_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
-    await show_calendar(update, context, user_id)
+    from calendar_view import build_calendar
+    from keyboards import main_menu_keyboard
+    dates = get_checkup_dates(user_id)
+    if not dates:
+        await update.message.reply_text("Пока нет записей.")
+        return
+    calendar = build_calendar(user_id, dates)
+    await update.message.reply_text("📅 Выбери день:", reply_markup=calendar)
 
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -52,7 +59,8 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "/test_morning - Утренний опрос\n"
         "/test_afternoon - Дневной опрос\n"
         "/test_evening - Вечерний опрос\n"
-        "/test_calendar - Показать календарь"
+        "/test_calendar - Показать календарь\n"
+        "/test_week - Недельный отчёт"
     )
 
 
@@ -91,6 +99,15 @@ async def test_calendar(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await show_calendar(update, context, user_id)
 
 
+async def test_week(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    from calendar_view import build_week_report
+    user_id = update.effective_user.id
+    args = context.args
+    weeks_ago = int(args[0]) if args else 0
+    report = build_week_report(user_id, weeks_ago)
+    await update.message.reply_text(report, parse_mode="Markdown")
+
+
 async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE):
     logger.error(f"Exception while handling update: {context.error}")
 
@@ -111,6 +128,7 @@ async def main():
     app.add_handler(CommandHandler("test_afternoon", test_afternoon))
     app.add_handler(CommandHandler("test_evening", test_evening))
     app.add_handler(CommandHandler("test_calendar", test_calendar))
+    app.add_handler(CommandHandler("test_week", test_week))
     app.add_handler(CallbackQueryHandler(handle_callback))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     app.add_error_handler(error_handler)

@@ -3,7 +3,7 @@ from telegram.ext import ContextTypes
 from bot_config import FEELING_EMOJI, RESPONSE_COLORS
 from database import save_checkup, get_last_checkup, get_checkup_dates, get_user_checkups
 from keyboards import feeling_keyboard, yes_no_keyboard, observations_keyboard, main_menu_keyboard
-from calendar_view import build_calendar, build_day_detail
+from calendar_view import build_calendar, build_day_detail, build_week_report
 
 
 class CheckupState:
@@ -33,6 +33,22 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if data == "menu:report":
         await show_calendar(update, context, user_id)
+        return
+
+    if data == "calendar:week":
+        week_report = build_week_report(user_id, 0)
+        from keyboards import week_navigation_keyboard
+        await query.edit_message_text(week_report, parse_mode="Markdown", reply_markup=week_navigation_keyboard(0))
+        return
+
+    if data.startswith("calendar:week:"):
+        weeks_ago = int(data.split(":")[-1])
+        week_report = build_week_report(user_id, weeks_ago)
+        from keyboards import week_navigation_keyboard
+        await query.edit_message_text(week_report, parse_mode="Markdown", reply_markup=week_navigation_keyboard(weeks_ago))
+        return
+
+    if data == "calendar:month" or data == "menu:back":
         return
 
     if data.startswith("calendar:"):
@@ -152,7 +168,7 @@ async def show_calendar(update: Update, context: ContextTypes.DEFAULT_TYPE, user
             )
         return
 
-    calendar = build_calendar(dates)
+    calendar = build_calendar(user_id, dates)
     if update.callback_query:
         await update.callback_query.edit_message_text(
             "📅 Выбери день:",
@@ -167,10 +183,10 @@ async def show_day_detail(update: Update, context: ContextTypes.DEFAULT_TYPE, us
         if update.callback_query:
             await update.callback_query.edit_message_text(
                 "Нет данных за этот день.",
-                reply_markup=build_calendar(get_checkup_dates(user_id))
+                reply_markup=build_calendar(user_id, get_checkup_dates(user_id))
             )
         return
 
     detail = build_day_detail(date_str, checkups)
     if update.callback_query:
-        await update.callback_query.edit_message_text(detail, parse_mode="Markdown")
+        await update.callback_query.edit_message_text(detail, parse_mode="Markdown", reply_markup=main_menu_keyboard())
