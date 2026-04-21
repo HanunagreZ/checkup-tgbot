@@ -1,5 +1,4 @@
 import os
-import sys
 import asyncio
 import logging
 from telegram import Update
@@ -33,7 +32,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def report_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
-    show_calendar(update, context, user_id)
+    await show_calendar(update, context, user_id)
 
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -44,6 +43,10 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "/report - Посмотреть отчёт\n"
         "/help - Помощь"
     )
+
+
+async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE):
+    logger.error(f"Exception while handling update: {context.error}")
 
 
 async def main():
@@ -60,6 +63,7 @@ async def main():
     app.add_handler(CommandHandler("help", help_command))
     app.add_handler(CallbackQueryHandler(handle_callback))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+    app.add_error_handler(error_handler)
 
     logger.info("Бот запущен")
 
