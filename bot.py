@@ -7,6 +7,7 @@ from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQu
 from bot_config import TELEGRAM_BOT_TOKEN
 from database import init_db, add_user
 from handlers import handle_callback, handle_message, show_calendar, show_day_detail
+from handlers import user_states, CheckupState
 from keyboards import main_menu_keyboard
 from scheduler import register_user
 
@@ -46,8 +47,48 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "Команды:\n"
         "/start - Начать\n"
         "/report - Посмотреть отчёт\n"
-        "/help - Помощь"
+        "/help - Помощь\n\n"
+        "Тестовые команды:\n"
+        "/test_morning - Утренний опрос\n"
+        "/test_afternoon - Дневной опрос\n"
+        "/test_evening - Вечерний опрос\n"
+        "/test_calendar - Показать календарь"
     )
+
+
+async def test_morning(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    from keyboards import feeling_keyboard
+    user_id = update.effective_user.id
+    if user_id not in user_states:
+        from handlers import CheckupState
+        user_states[user_id] = CheckupState()
+    user_states[user_id].check_time = "morning"
+    await update.message.reply_text("Тест: Утро - Как твоё самочувствие?", reply_markup=feeling_keyboard())
+
+
+async def test_afternoon(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    from keyboards import feeling_keyboard
+    from handlers import CheckupState
+    user_id = update.effective_user.id
+    if user_id not in user_states:
+        user_states[user_id] = CheckupState()
+    user_states[user_id].check_time = "afternoon"
+    await update.message.reply_text("Тест: День - Как твоё самочувствие?", reply_markup=feeling_keyboard())
+
+
+async def test_evening(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    from keyboards import feeling_keyboard
+    from handlers import CheckupState
+    user_id = update.effective_user.id
+    if user_id not in user_states:
+        user_states[user_id] = CheckupState()
+    user_states[user_id].check_time = "evening"
+    await update.message.reply_text("Тест: Вечер - Как твоё самочувствие?", reply_markup=feeling_keyboard())
+
+
+async def test_calendar(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    await show_calendar(update, context, user_id)
 
 
 async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE):
@@ -66,6 +107,10 @@ async def main():
     app.add_handler(CommandHandler("start", start_command))
     app.add_handler(CommandHandler("report", report_command))
     app.add_handler(CommandHandler("help", help_command))
+    app.add_handler(CommandHandler("test_morning", test_morning))
+    app.add_handler(CommandHandler("test_afternoon", test_afternoon))
+    app.add_handler(CommandHandler("test_evening", test_evening))
+    app.add_handler(CommandHandler("test_calendar", test_calendar))
     app.add_handler(CallbackQueryHandler(handle_callback))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     app.add_error_handler(error_handler)
