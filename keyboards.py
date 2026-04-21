@@ -1,5 +1,5 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-from config import FEELING_EMOJI
+from bot_config import FEELING_EMOJI
 
 
 def feeling_keyboard():

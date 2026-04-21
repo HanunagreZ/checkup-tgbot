@@ -2,7 +2,7 @@ import schedule
 import time
 import threading
 from telegram import Update
-from config import SCHEDULE_TIMES, FEELING_EMOJI
+from bot_config import SCHEDULE_TIMES, FEELING_EMOJI
 from keyboards import feeling_keyboard, yes_no_keyboard, observations_keyboard, main_menu_keyboard
 from database import get_last_checkup
 

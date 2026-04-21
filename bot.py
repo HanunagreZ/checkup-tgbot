@@ -2,7 +2,7 @@ import os
 import logging
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters
-from config import TELEGRAM_BOT_TOKEN
+from bot_config import TELEGRAM_BOT_TOKEN
 from database import init_db, add_user
 from handlers import handle_callback, handle_message, send_feeling_question, show_calendar, show_day_detail
 from keyboards import main_menu_keyboard

@@ -1,6 +1,6 @@
 import sqlite3
 from datetime import date, datetime
-from config import DB_PATH
+from bot_config import DB_PATH
 
 
 def init_db():

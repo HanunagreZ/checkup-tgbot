@@ -1,7 +1,7 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from datetime import datetime, timedelta
 from calendar import monthrange
-from config import RESPONSE_COLORS
+from bot_config import RESPONSE_COLORS
 
 
 def build_calendar(dates):
