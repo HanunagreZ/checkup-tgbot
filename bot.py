@@ -1,13 +1,13 @@
 import os
+import asyncio
 import logging
 from telegram import Update
-from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters
-from telegram.ext import CallbackContext
+from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters, ContextTypes
 from bot_config import TELEGRAM_BOT_TOKEN
 from database import init_db, add_user
 from handlers import handle_callback, handle_message, show_calendar, show_day_detail
 from keyboards import main_menu_keyboard
-from scheduler import register_user, setup_scheduler
+from scheduler import register_user
 
 
 logging.basicConfig(
@@ -17,12 +17,12 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def start_command(update: Update, context: CallbackContext):
+async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     add_user(user.id, user.username, user.first_name, user.last_name)
     register_user(user.id)
 
-    update.message.reply_text(
+    await update.message.reply_text(
         "Привет! Я буду следить за твоим самочувствием. "
         "Три раза в день буду спрашивать, как ты себя чувствуешь.\n\n"
         "Используй /report чтобы посмотреть отчёт.",
@@ -30,13 +30,13 @@ def start_command(update: Update, context: CallbackContext):
     )
 
 
-def report_command(update: Update, context: CallbackContext):
+async def report_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     show_calendar(update, context, user_id)
 
 
-def help_command(update: Update, context: CallbackContext):
-    update.message.reply_text(
+async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(
         "Я буду присылать тебе вопросы о самочувствии в 8:00, 14:00 и 20:00.\n\n"
         "Команды:\n"
         "/start - Начать\n"
@@ -60,10 +60,8 @@ def main():
     app.add_handler(CallbackQueryHandler(handle_callback))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-    setup_scheduler(app)
-
     logger.info("Бот запущен")
-    app.run_polling()
+    app.run_polling(drop_pending_updates=True)
 
 
 if __name__ == "__main__":
