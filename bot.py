@@ -1,9 +1,11 @@
 import os
 import asyncio
-import nest_asyncio
 import logging
-
-nest_asyncio.patch()
+try:
+    import nest_asyncio
+    nest_asyncio.apply()
+except ImportError:
+    pass
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters
 from bot_config import TELEGRAM_BOT_TOKEN
