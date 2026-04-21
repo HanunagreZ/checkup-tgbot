@@ -3,7 +3,7 @@ from telegram.ext import CallbackContext
 from bot_config import FEELING_EMOJI, RESPONSE_COLORS
 from database import save_checkup, get_last_checkup, get_checkup_dates, get_user_checkups
 from keyboards import feeling_keyboard, yes_no_keyboard, observations_keyboard, main_menu_keyboard
-from calendar import build_calendar, build_day_detail
+from calendar_view import build_calendar, build_day_detail
 
 
 class CheckupState:
