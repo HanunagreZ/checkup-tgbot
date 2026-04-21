@@ -1,4 +1,5 @@
 import os
+import asyncio
 import logging
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters
@@ -44,7 +45,7 @@ async def help_command(update: Update, context: CallbackContext):
     )
 
 
-def main():
+async def main():
     init_db()
 
     application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
@@ -59,8 +60,8 @@ def main():
     run_scheduler(application)
 
     logger.info("Бот запущен")
-    application.run_polling(allowed_updates=Update.ALL_TYPES)
+    await application.run_polling(allowed_updates=Update.ALL_TYPES)
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
