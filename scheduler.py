@@ -38,9 +38,9 @@ def setup_schedule(application):
                     reply_markup=feeling_keyboard()
                 )
 
-    schedule.every().day.at(f"{SCHEDULE_TIMES['morning']}:00").do(send_morning_checkup)
-    schedule.every().day.at(f"{SCHEDULE_TIMES['afternoon']}:00").do(send_afternoon_checkup)
-    schedule.every().day.at(f"{SCHEDULE_TIMES['evening']}:00").do(send_evening_checkup)
+    schedule.every().day.at(f"{SCHEDULE_TIMES['morning']:02d}:00").do(send_morning_checkup)
+    schedule.every().day.at(f"{SCHEDULE_TIMES['afternoon']:02d}:00").do(send_afternoon_checkup)
+    schedule.every().day.at(f"{SCHEDULE_TIMES['evening']:02d}:00").do(send_evening_checkup)
 
 
 def run_scheduler(application):
