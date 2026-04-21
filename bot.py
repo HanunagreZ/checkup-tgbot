@@ -1,13 +1,12 @@
 import os
-import asyncio
 import logging
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters
 from bot_config import TELEGRAM_BOT_TOKEN
 from database import init_db, add_user
-from handlers import handle_callback, handle_message, send_feeling_question, show_calendar, show_day_detail
+from handlers import handle_callback, handle_message, show_calendar, show_day_detail
 from keyboards import main_menu_keyboard
-from scheduler import setup_scheduler, register_user, run_scheduler
+from scheduler import register_user
 
 
 logging.basicConfig(
@@ -45,27 +44,31 @@ async def help_command(update: Update, context: CallbackContext):
     )
 
 
-async def main():
+def main():
     init_db()
 
     if not TELEGRAM_BOT_TOKEN:
         logger.error("TELEGRAM_BOT_TOKEN не установлен!")
         return
 
-    application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
+    app = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
 
-    application.add_handler(CommandHandler("start", start_command))
-    application.add_handler(CommandHandler("report", report_command))
-    application.add_handler(CommandHandler("help", help_command))
-    application.add_handler(CallbackQueryHandler(handle_callback))
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-
-    setup_scheduler(application)
-    asyncio.create_task(run_scheduler())
+    app.add_handler(CommandHandler("start", start_command))
+    app.add_handler(CommandHandler("report", report_command))
+    app.add_handler(CommandHandler("help", help_command))
+    app.add_handler(CallbackQueryHandler(handle_callback))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
     logger.info("Бот запущен")
-    await application.run_polling(allowed_updates=Update.ALL_TYPES)
+
+    port = int(os.environ.get("PORT", "8443"))
+    app.run_webhook(
+        listen="0.0.0.0",
+        port=port,
+        url_path="webhook",
+        webhook_url=os.environ.get("WEBHOOK_URL", "")
+    )
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
