@@ -1,4 +1,5 @@
 import os
+import asyncio
 import logging
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters
@@ -44,7 +45,7 @@ async def help_command(update: Update, context: CallbackContext):
     )
 
 
-def main():
+async def main():
     init_db()
 
     if not TELEGRAM_BOT_TOKEN:
@@ -62,7 +63,7 @@ def main():
     logger.info("Бот запущен")
 
     port = int(os.environ.get("PORT", "8443"))
-    app.run_webhook(
+    await app.run_webhook(
         listen="0.0.0.0",
         port=port,
         url_path="webhook",
@@ -71,4 +72,9 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        asyncio.run(main())
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(main())
