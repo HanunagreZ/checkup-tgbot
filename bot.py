@@ -1,6 +1,7 @@
 import os
 import asyncio
 import logging
+from aiohttp import web
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters, ContextTypes
 from bot_config import TELEGRAM_BOT_TOKEN
@@ -15,6 +16,10 @@ logging.basicConfig(
     level=logging.INFO
 )
 logger = logging.getLogger(__name__)
+
+
+async def health_check(request):
+    return web.Response(text="OK")
 
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -70,6 +75,18 @@ async def main():
     await app.initialize()
     await app.start()
     await app.updater.start_polling(drop_pending_updates=True)
+
+    web_app = web.Application()
+    web_app.router.add_get('/', health_check)
+    web_app.router.add_get('/health', health_check)
+
+    runner = web.AppRunner(web_app)
+    await runner.setup()
+    port = int(os.environ.get("PORT", 10000))
+    site = web.TCPSite(runner, '0.0.0.0', port)
+    await site.start()
+
+    logger.info(f"HTTP server started on port {port}")
 
     while True:
         await asyncio.sleep(3600)
