@@ -7,7 +7,7 @@ from bot_config import TELEGRAM_BOT_TOKEN
 from database import init_db, add_user
 from handlers import handle_callback, handle_message, send_feeling_question, show_calendar, show_day_detail
 from keyboards import main_menu_keyboard
-from scheduler import setup_schedule, run_scheduler, register_user
+from scheduler import setup_scheduler, register_user, run_scheduler
 
 
 logging.basicConfig(
@@ -48,6 +48,10 @@ async def help_command(update: Update, context: CallbackContext):
 async def main():
     init_db()
 
+    if not TELEGRAM_BOT_TOKEN:
+        logger.error("TELEGRAM_BOT_TOKEN не установлен!")
+        return
+
     application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
 
     application.add_handler(CommandHandler("start", start_command))
@@ -56,8 +60,8 @@ async def main():
     application.add_handler(CallbackQueryHandler(handle_callback))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-    setup_schedule(application)
-    run_scheduler(application)
+    setup_scheduler(application)
+    asyncio.create_task(run_scheduler())
 
     logger.info("Бот запущен")
     await application.run_polling(allowed_updates=Update.ALL_TYPES)

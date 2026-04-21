@@ -1,61 +1,11 @@
-import schedule
-import time
-import threading
 import asyncio
-from bot_config import SCHEDULE_TIMES, FEELING_EMOJI
+from datetime import datetime
+from bot_config import SCHEDULE_TIMES
 from keyboards import feeling_keyboard
 from database import get_last_checkup
 
 
 app_ref = None
-
-
-def setup_schedule(application):
-    global app_ref
-    app_ref = application
-
-    def send_morning_checkup():
-        for user_id in get_active_users():
-            if not get_last_checkup(user_id, "morning"):
-                asyncio.run(app_ref.bot.send_message(
-                    chat_id=user_id,
-                    text="Как твоё самочувствие?",
-                    reply_markup=feeling_keyboard()
-                ))
-
-    def send_afternoon_checkup():
-        for user_id in get_active_users():
-            if not get_last_checkup(user_id, "afternoon"):
-                asyncio.run(app_ref.bot.send_message(
-                    chat_id=user_id,
-                    text="Как твоё самочувствие?",
-                    reply_markup=feeling_keyboard()
-                ))
-
-    def send_evening_checkup():
-        for user_id in get_active_users():
-            if not get_last_checkup(user_id, "evening"):
-                asyncio.run(app_ref.bot.send_message(
-                    chat_id=user_id,
-                    text="Как твоё самочувствие?",
-                    reply_markup=feeling_keyboard()
-                ))
-
-    schedule.every().day.at(f"{SCHEDULE_TIMES['morning']:02d}:00").do(send_morning_checkup)
-    schedule.every().day.at(f"{SCHEDULE_TIMES['afternoon']:02d}:00").do(send_afternoon_checkup)
-    schedule.every().day.at(f"{SCHEDULE_TIMES['evening']:02d}:00").do(send_evening_checkup)
-
-
-def run_scheduler(application):
-    def run():
-        while True:
-            schedule.run_pending()
-            time.sleep(60)
-
-    thread = threading.Thread(target=run, daemon=True)
-    thread.start()
-
-
 active_users = set()
 
 
@@ -65,3 +15,34 @@ def register_user(user_id):
 
 def get_active_users():
     return list(active_users)
+
+
+async def send_scheduled_messages():
+    while True:
+        now = datetime.now()
+        current_hour = now.hour
+
+        for check_time, hour in SCHEDULE_TIMES.items():
+            if current_hour == hour:
+                if app_ref:
+                    for user_id in get_active_users():
+                        if not get_last_checkup(user_id, check_time):
+                            try:
+                                await app_ref.bot.send_message(
+                                    chat_id=user_id,
+                                    text="Как твоё самочувствие?",
+                                    reply_markup=feeling_keyboard()
+                                )
+                            except Exception:
+                                pass
+
+        await asyncio.sleep(60)
+
+
+async def run_scheduler():
+    await send_scheduled_messages()
+
+
+def setup_scheduler(application):
+    global app_ref
+    app_ref = application
